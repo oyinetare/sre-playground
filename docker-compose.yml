@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - AWS_ENDPOINT_URL=http://localstack:4567
+    depends_on:
+      - localstack
+
+  localstack:
+    image: localstack/localstack:3.0
+    ports:
+      - "4567:4567"
+    environment:
+      - SERVICES=s3,sqs,dynamodb
+      - DEBUG=1
+    volumes:
+      - "./tmp/localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
