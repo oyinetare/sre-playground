@@ -7,6 +7,7 @@ from app.db.database import engine
 from app.models.student import Base, Student
 from app.api import health, students
 from app.core.metrics import http_request_duration, http_requests_total
+from app.services.sqs_service import sqs_service
 
 import time
 
@@ -23,6 +24,10 @@ async def lifespan(app: FastAPI):
     
     # create db tables
     Base.metadata.create_all(bind=engine)
+    
+    # initialize SQS
+    sqs_service.initialize()
+    
     logger.info("Database tables created")
     
     yield

@@ -1,0 +1,48 @@
+import boto3
+import json
+import time
+
+class SQSService:
+    def __init__(self):
+        self.sqs = None
+        self.queue_url = None
+
+    def initialize(self):
+        """Initialize SQS client - call this on app startup"""
+        try:
+            self.sqs = boto3.client(
+                'sqs',
+                endpoint_url='http://localstack:4566',
+                region_name='us-east-1',
+                aws_access_key_id='test',
+                aws_secret_access_key='test'
+            )
+            # Get queue URL from Terraform output
+            self.queue_url = "http://localstack:4566/000000000000/student-events"
+            print("SQS Service initialized")
+        except Exception as e:
+            print(f"Failed to initialize SQS: {e}")
+
+    def send_event(self, event_type: str, data: dict) -> bool:
+        """Send event to SQS - returns True if successful"""
+        if not self.sqs:
+            print("SQS not initialized")
+            return False
+
+        try:
+            self.sqs.send_message(
+                QueueUrl=self.queue_url,
+                MessageBody=json.dumps({
+                    'event_type': event_type,
+                    'data': data,
+                    'timestamp': str(time.time())
+                })
+            )
+            print(f"Sent {event_type} event to SQS")
+            return True
+        except Exception as e:
+            print(f"Failed to send SQS message: {e}")
+            return False
+
+# Global instance
+sqs_service = SQSService()
