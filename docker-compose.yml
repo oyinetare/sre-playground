@@ -17,6 +17,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - sre-network
 
   postgres:
     image: postgres:15-alpine
@@ -33,17 +35,40 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - sre-network
 
   localstack:
     image: localstack/localstack:latest
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3,sqs,dynamodb,secretsmanager
+      - SERVICES=s3,sqs,dynamodb,secretsmanager,cloudwatch
       - DEBUG=1
     volumes:
       - "./tmp/localstack:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - sre-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    networks:
+      - sre-network
 
 volumes:
   postgres_data:
+  prometheus_data:
+
+networks:
+  sre-network:
+    driver: bridge
