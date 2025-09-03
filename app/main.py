@@ -1,24 +1,38 @@
-from fastapi import FastAPI, Response
-from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
-import time
+from fastapi import FastAPI
+import logging
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="SRE Playground API", version="1.0.0")
+from app.core.config import get_settings
+from app.db.database import engine
+from app.models.student import Base, Student
+from app.api import health, students
 
-# Simple basic metric
-request_count = Counter('request_total', 'Total requests')
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+settings = get_settings()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    logger.info(f"Starting {settings.app_name} in {settings.environment} mode")
+    
+    # create db tables
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables created")
+    
+    yield
+    
+    # shutdown
+    logger.info("Shutting down")
+
+app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+# api handlers
+app.include_router(health.router, tags=["health"])
+app.include_router(students.router, prefix="/api/v1", tags=["students"])
 
 @app.get("/")
 def root():
-    request_count.inc()
-    return {"message": "SRE Playground API", "status": "running"}
-
-@app.get("/health")
-def health():
-    return {
-        "status": "healthy",
-        "timestamp": time.time()
-    }
-    
-@app.get("/metrics")
-def metrics():
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+    return {"app": settings.app_name,"environment": settings.environment , "status": "running"}

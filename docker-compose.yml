@@ -6,17 +6,44 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - AWS_ENDPOINT_URL=http://localstack:4567
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/sredb
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - ENVIRONMENT=development
     depends_on:
+      - postgres
       - localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: sredb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   localstack:
-    image: localstack/localstack:3.0
+    image: localstack/localstack:latest
     ports:
-      - "4567:4567"
+      - "4566:4566"
     environment:
-      - SERVICES=s3,sqs,dynamodb
+      - SERVICES=s3,sqs,dynamodb,secretsmanager
       - DEBUG=1
     volumes:
       - "./tmp/localstack:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+
+volumes:
+  postgres_data:
