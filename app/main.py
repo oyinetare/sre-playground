@@ -6,6 +6,9 @@ from app.core.config import get_settings
 from app.db.database import engine
 from app.models.student import Base, Student
 from app.api import health, students
+from app.core.metrics import http_request_duration, http_requests_total
+
+import time
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -36,3 +39,19 @@ app.include_router(students.router, prefix="/api/v1", tags=["students"])
 @app.get("/")
 def root():
     return {"app": settings.app_name,"environment": settings.environment , "status": "running"}
+
+@app.middleware("http")
+async def add_metrics(request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    
+    http_requests_total.labels(
+        method=request.method,
+        endpoint=request.url.path,
+        status=response.status_code
+    ).inc()
+    
+    http_request_duration.observe(duration)
+    
+    return response

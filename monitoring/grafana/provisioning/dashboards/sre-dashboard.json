@@ -1,0 +1,16 @@
+{
+  "dashboard": {
+    "title": "SRE Playground",
+    "panels": [
+      {
+        "title": "Request Rate",
+        "targets": [
+          {
+            "expr": "rate(prometheus_http_requests_total[5m])"
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+      }
+    ]
+  }
+}
