@@ -25,8 +25,8 @@ async def lifespan(app: FastAPI):
     # create db tables
     Base.metadata.create_all(bind=engine)
     
-    # initialize SQS
-    sqs_service.initialize()
+    # initialise SQS
+    sqs_service.initialise()
     
     logger.info("Database tables created")
     

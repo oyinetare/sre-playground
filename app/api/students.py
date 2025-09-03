@@ -9,6 +9,7 @@ from app.db.database import get_db
 from app.models.student import Student
 from app.core.metrics import students_created_total
 from app.services.sqs_service import sqs_service
+from app.services.audit_service import audit_service
 
 router = APIRouter()
 
@@ -39,10 +40,10 @@ def create_student(student: StudentCreate, db: Session = Depends(get_db)):
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
-    
+
     # update metrics
     students_created_total.inc()
-    
+
     # send event (don't fail if SQS is down)
     sqs_service.send_event(
         'student_created',
@@ -50,6 +51,14 @@ def create_student(student: StudentCreate, db: Session = Depends(get_db)):
             'student_id': db_student.student_id,
             'name': f"{db_student.first_name} {db_student.last_name}",
             'grade': db_student.grade
+        }
+    )
+
+    audit_service.log_action(
+        'student_created',
+        {
+            'student_id': db_student.student_id,
+            'created_by': 'api_user'
         }
     )
 

@@ -7,8 +7,8 @@ class SQSService:
         self.sqs = None
         self.queue_url = None
 
-    def initialize(self):
-        """Initialize SQS client - call this on app startup"""
+    def initialise(self):
+        """Initialise SQS client - call this on app startup"""
         try:
             self.sqs = boto3.client(
                 'sqs',
@@ -19,14 +19,14 @@ class SQSService:
             )
             # Get queue URL from Terraform output
             self.queue_url = "http://localstack:4566/000000000000/student-events"
-            print("SQS Service initialized")
+            print("SQS Service initialised")
         except Exception as e:
-            print(f"Failed to initialize SQS: {e}")
+            print(f"Failed to initialise SQS: {e}")
 
     def send_event(self, event_type: str, data: dict) -> bool:
         """Send event to SQS - returns True if successful"""
         if not self.sqs:
-            print("SQS not initialized")
+            print("SQS not initialised")
             return False
 
         try:
