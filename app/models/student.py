@@ -1,10 +1,13 @@
-from sqlalchemy import Column, Integer, String, DateTime
 from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Integer, String
+
 from app.db.database import Base
+
 
 class Student(Base):
     __tablename__ = "students"
-    
+
     id = Column(Integer, primary_key=True)
     student_id = Column(String, unique=True, index=True)
     first_name = Column(String)

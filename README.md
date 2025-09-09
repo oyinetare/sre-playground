@@ -75,11 +75,11 @@ cp .env.example .env
 # 3. Start all services
 docker-compose up -d --build
 
-# 4. Wait for services to initialize
+# 4. Wait for services to initialise
 echo "⏳ Waiting for services to start..."
 sleep 30
 
-# 5. Initialize infrastructure
+# 5. Initialise infrastructure
 cd infrastructure/terraform
 terraform init && terraform apply -auto-approve
 cd ../..
@@ -173,7 +173,7 @@ docker exec sre-playground-app bash -c "cd /app && python -m pytest tests/unit/t
 
 2. **SQS not receiving messages**
 
-   - LocalStack might take time to initialize. Wait 60 seconds after startup
+   - LocalStack might take time to initialise. Wait 60 seconds after startup
    - Verify queue exists: `aws --endpoint-url=http://localhost:4566 sqs list-queues`
 
 3. **Tests not found**
@@ -543,7 +543,7 @@ docker exec -it sre-playground-app bash  # Enter container
 
 ```bash
 cd infrastructure/terraform
-terraform init                    # Initialize
+terraform init                    # Initialise
 terraform plan                    # Preview changes
 terraform apply -auto-approve     # Apply changes
 terraform destroy -auto-approve   # Cleanup

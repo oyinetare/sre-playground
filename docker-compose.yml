@@ -1,17 +1,20 @@
-version: "3.8"
+# version: "3.8"
 
 services:
   app:
+    container_name: sre-playground-app # to force specific name
     build: .
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://admin:password@postgres:5432/sredb
       - AWS_ENDPOINT_URL=http://localstack:4566
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/sredb
       - ENVIRONMENT=development
+      - REDIS_URL=redis://redis:6379
     depends_on:
       - postgres
       - localstack
+      - redis
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -20,8 +23,25 @@ services:
     networks:
       - sre-network
 
+  # Localstack for AWS Services
+  localstack:
+    image: localstack/localstack:latest
+    container_name: sre-playground-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs,dynamodb,secretsmanager,cloudwatch
+      - DEBUG=1
+      - EDGE_PORT=4566
+    # volumes:
+    #   - "./tmp/localstack:/tmp/localstack"
+    #   - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - sre-network
+
   postgres:
     image: postgres:15-alpine
+    container_name: sre-playground-postgres
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
@@ -38,22 +58,10 @@ services:
     networks:
       - sre-network
 
-  localstack:
-    image: localstack/localstack:latest
-    ports:
-      - "4566:4566"
-    environment:
-      - SERVICES=s3,sqs,dynamodb,secretsmanager,cloudwatch
-      - DEBUG=1
-    volumes:
-      - "./tmp/localstack:/tmp/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    networks:
-      - sre-network
-
   # Prometheus for metrics collection
   prometheus:
     image: prom/prometheus:latest
+    container_name: sre-playground-prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -68,6 +76,7 @@ services:
   # Grafana for visualization
   grafana:
     image: grafana/grafana:latest
+    container_name: sre-playground-grafana
     ports:
       - "3000:3000"
     environment:
@@ -81,10 +90,22 @@ services:
     networks:
       - sre-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: sre-playground-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - sre-network
+
 volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
+  redis_data:
 
 networks:
   sre-network:

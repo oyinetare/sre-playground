@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 from enum import Enum
 
+
 class CircuitState(Enum):
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
+
 
 class CircuitBreaker:
     def __init__(self, name: str, failure_threshold: int = 3, timeout: int = 60):
@@ -12,7 +14,7 @@ class CircuitBreaker:
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.failure_count = 0
-        self.last_failure_time = None
+        self.last_failure_time: datetime | None = None
         self.state = CircuitState.CLOSED
 
     def call(self, func, *args, **kwargs):
@@ -28,13 +30,15 @@ class CircuitBreaker:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-        except Exception as e:
+        except Exception:
             self._on_failure()
-            raisecode 
+            raise
 
     def _should_attempt_reset(self):
         return (
-            self.last_failure_time and datetime.now() - self.last_failure_time > timedelta(seconds=self.timeout)
+            self.last_failure_time
+            and datetime.now() - self.last_failure_time
+            > timedelta(seconds=self.timeout)
         )
 
     def _on_success(self):
